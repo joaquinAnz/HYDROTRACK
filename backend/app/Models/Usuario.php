@@ -8,7 +8,6 @@ class Usuario extends Authenticatable
 {
     protected $table = 'usuarios';
     protected $primaryKey = 'id_usuario';
-
     public $timestamps = false;
 
     protected $fillable = [
@@ -16,7 +15,8 @@ class Usuario extends Authenticatable
         'usuario',
         'password_hash',
         'id_rol',
-        'estado'
+        'estado',
+        'fecha_creacion'
     ];
 
     protected $hidden = [
@@ -26,5 +26,10 @@ class Usuario extends Authenticatable
     public function getAuthPassword()
     {
         return $this->password_hash;
+    }
+
+    public function rol()
+    {
+        return $this->belongsTo(Rol::class, 'id_rol', 'id_rol');
     }
 }
