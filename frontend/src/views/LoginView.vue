@@ -42,6 +42,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
 import Navbar from '../components/Navbar.vue'
+import header from '../assets/Header.png'
 
 const router = useRouter()
 
@@ -95,14 +96,13 @@ const iniciarSesion = async () => {
 <style scoped>
 .login-container {
   height: 100vh;
-  background: url('https://images.unsplash.com/photo-1581091012184-5c6d1e9c4e3c') no-repeat center center;
+  background: url('../assets/Header.png') no-repeat center center;
   background-size: cover;
-  margin-top: 70px;
+  /*margin-top: 70px;*/
 }
 
 .overlay {
   height: 100%;
-  background: rgba(255,255,255,0.85);
   display: flex;
   justify-content: center;
   align-items: center;
