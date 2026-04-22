@@ -71,7 +71,7 @@
                   <p class="alert-title">{{ alert.title }}</p>
                   <p class="alert-sub">{{ alert.detail }}</p>
                 </div>
-                <button type="button">Ver</button>
+                <button type="button" @click="goToAlert(alert)">Ver</button>
               </div>
             </div>
           </article>
@@ -132,8 +132,13 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import heroImage from '../assets/hero.png'
 import logo from '../assets/logo.png'
+import api from '../services/api'
+
+const router = useRouter()
 
 const currentUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}')
 const nombre = currentUser.nombre || 'Administrador'
@@ -145,12 +150,12 @@ const initials = (nombre || 'A')
   .map((word) => word[0].toUpperCase())
   .join('')
 
-const stats = [
-  { label: 'Clientes Registrados', value: '14' },
+const stats = ref([
+  { label: 'Clientes Registrados', value: '...' },
   { label: 'Ingresos del mes', value: 'Bs 10k' },
   { label: 'Ordenes en proceso', value: '2' },
-  { label: 'Repuestos en stock', value: '3' }
-]
+  { label: 'Repuestos en stock', value: '...' }
+])
 
 const orders = [
   {
@@ -179,12 +184,7 @@ const orders = [
   }
 ]
 
-const alerts = [
-  {
-    title: 'Filtro de aceite bajo en stock',
-    detail: 'PRJ 001 - Stock actual: 7',
-    tone: 'warning'
-  },
+const alerts = ref([
   {
     title: 'Orden #003 esta retrasada',
     detail: 'Retraso mayor a la fecha estimada',
@@ -195,7 +195,41 @@ const alerts = [
     detail: 'Bs 140 por servicio pendiente',
     tone: 'success'
   }
-]
+])
+
+onMounted(async () => {
+  try {
+    const { data } = await api.get('/repuestos', { params: { activos: 1 } })
+    stats.value[3].value = String(data.length)
+    const stockAlerts = data
+      .filter((r) => r.stock_actual <= r.stock_minimo)
+      .map((r) => ({
+        title: r.stock_actual <= 0
+          ? `${r.nombre} — AGOTADO`
+          : `${r.nombre} — Stock bajo`,
+        detail: `${r.descripcion || r.marca || ''} · Stock: ${r.stock_actual} / Min: ${r.stock_minimo}`,
+        tone: r.stock_actual <= 0 ? 'warning' : 'caution',
+        repuestoNombre: r.nombre
+      }))
+    alerts.value = [...stockAlerts, ...alerts.value]
+  } catch (_) {
+    stats.value[3].value = '-'
+  }
+
+  try {
+    const { data: clientes } = await api.get('/clientes')
+    const activos = clientes.filter((c) => c.estado === true)
+    stats.value[0].value = String(activos.length)
+  } catch (_) {
+    stats.value[0].value = '-'
+  }
+})
+
+const goToAlert = (alert) => {
+  if (alert.repuestoNombre) {
+    router.push({ path: '/inventario', query: { highlight: alert.repuestoNombre } })
+  }
+}
 
 const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct']
 </script>

@@ -14,6 +14,7 @@
         </div>
 
         <nav class="top-links">
+          <router-link to="/dashboard">DASHBOARD</router-link>
           <a href="#">MIS SERVICIOS</a>
           <a href="#">CLIENTES</a>
           <router-link to="/inventario">INVENTARIOS</router-link>
@@ -48,8 +49,10 @@
         </section>
 
         <section class="toolbar-row">
-          <button class="tab-action active">+ AGREGAR REPUESTO</button>
-          <button class="tab-action">REPUESTOS ACTIVOS</button>
+          <button class="tab-action active" @click="openCreateModal">+ AGREGAR REPUESTO</button>
+          <button class="tab-action" @click="onlyActive = !onlyActive">
+            {{ onlyActive ? 'REPUESTOS ACTIVOS' : 'VER INACTIVOS' }}
+          </button>
         </section>
 
         <section class="table-card">
@@ -58,7 +61,7 @@
           </div>
 
           <div class="search-wrap">
-            <input v-model="search" type="text" placeholder="Buscar producto o codigo..." />
+            <input v-model="search" type="text" placeholder="Buscar codigo o descripcion..." />
             <span class="search-icon">⌕</span>
           </div>
 
@@ -66,35 +69,43 @@
             <table>
               <thead>
                 <tr>
-                  <th>Producto</th>
-                  <th>Codigo</th>
-                  <th>Stock</th>
-                  <th>Precio</th>
+                  <th>Codigo Repuesto</th>
+                  <th>Descripcion</th>
+                  <th>Marca</th>
+                  <th>Stock Actual</th>
+                  <th>Stock Minimo</th>
+                  <th>Precio Venta</th>
                   <th>Estado</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in paginatedItems" :key="item.codigo">
-                  <td class="product-cell">
-                    <span class="thumb" :class="item.thumbClass"></span>
-                    <span>{{ item.producto }}</span>
-                  </td>
-                  <td>{{ item.codigo }}</td>
-                  <td>{{ item.stock }}</td>
-                  <td>Bs {{ item.precio }}</td>
+                <tr v-for="item in paginatedItems" :key="item.id_repuesto" :id="`row-${item.id_repuesto}`" :class="{ 'row-blink': item.id_repuesto === highlightedId }">
                   <td>
-                    <span class="state-pill" :class="stockTone(item.stock)">
-                      {{ stockLabel(item.stock) }}
+                    <div class="product-cell">
+                      <span class="thumb" :class="item.thumbClass"></span>
+                      <span>{{ item.nombre }}</span>
+                    </div>
+                  </td>
+                  <td class="description-cell">{{ item.descripcion || '-' }}</td>
+                  <td>{{ item.marca || '-' }}</td>
+                  <td>{{ item.stock_actual }}</td>
+                  <td>{{ item.stock_minimo }}</td>
+                  <td>Bs {{ item.precio_venta }}</td>
+                  <td>
+                    <span class="state-pill" :class="stockTone(item.stock_actual, item.stock_minimo)">
+                      {{ stockLabel(item.stock_actual, item.stock_minimo) }}
                     </span>
                   </td>
-                  <td class="actions-cell">
-                    <button class="mini-btn edit" title="Editar">✎</button>
-                    <button class="mini-btn delete" title="Eliminar">🗑</button>
+                  <td>
+                    <div class="actions-cell">
+                      <button class="mini-btn edit" title="Editar" @click="openEditModal(item)">✎</button>
+                      <button class="mini-btn delete" title="Eliminar" @click="deleteRepuesto(item.id_repuesto)">🗑</button>
+                    </div>
                   </td>
                 </tr>
                 <tr v-if="!paginatedItems.length">
-                  <td colspan="6" class="empty">No se encontraron repuestos</td>
+                  <td colspan="8" class="empty">No se encontraron repuestos</td>
                 </tr>
               </tbody>
             </table>
@@ -115,6 +126,46 @@
           </div>
         </section>
       </main>
+
+      <div v-if="showModal" class="modal-backdrop" @click.self="closeModal">
+        <div class="modal">
+          <h3>{{ modalMode === 'create' ? 'Agregar Repuesto' : 'Editar Repuesto' }}</h3>
+
+          <label>Codigo de Repuesto</label>
+          <input v-model="form.nombre" maxlength="100" />
+          <p class="field-error" v-if="codigoError">{{ codigoError }}</p>
+
+          <label>Marca</label>
+          <input v-model="form.marca" maxlength="50" />
+
+          <label>Descripcion del Repuesto</label>
+          <textarea v-model="form.descripcion" rows="3"></textarea>
+
+          <label>Stock Actual</label>
+          <input v-model.number="form.stock_actual" type="number" min="0" />
+
+          <label>Stock Minimo</label>
+          <input v-model.number="form.stock_minimo" type="number" min="0" />
+
+          <label>Precio Compra (Bs)</label>
+          <input v-model.number="form.precio_compra" type="number" min="0" step="0.01" />
+
+          <label>Precio Venta (Bs)</label>
+          <input v-model.number="form.precio_venta" type="number" min="0" step="0.01" />
+
+          <label class="inline-check">
+            <input type="checkbox" v-model="form.estado" />
+            Activo
+          </label>
+
+          <p class="field-error" v-if="modalError">{{ modalError }}</p>
+
+          <div class="actions-row">
+            <button class="ghost" @click="closeModal">Cancelar</button>
+            <button @click="saveRepuesto" :disabled="loading">{{ loading ? 'Guardando...' : 'Guardar' }}</button>
+          </div>
+        </div>
+      </div>
 
       <footer class="footer">
         <div class="footer-brand">
@@ -142,7 +193,12 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import api from '../services/api'
+
+const route = useRoute()
+const highlightedId = ref(null)
 import headerImage from '../assets/Header.png'
 import heroImage from '../assets/hero.png'
 import logo from '../assets/logo.png'
@@ -151,24 +207,33 @@ const search = ref('')
 const currentPage = ref(1)
 const itemsPerPage = 7
 
-const items = [
-  { producto: 'Filtro de Aceite', codigo: 'PRO-001', stock: 7, precio: 50, thumbClass: 't1' },
-  { producto: 'Pastillas de Freno', codigo: 'PRO-002', stock: 25, precio: 120, thumbClass: 't2' },
-  { producto: 'Bateria 12V', codigo: 'PRO-003', stock: 0, precio: 450, thumbClass: 't3' },
-  { producto: 'Aceite de Motor 5W-30', codigo: 'PRO-004', stock: 50, precio: 80, thumbClass: 't4' },
-  { producto: 'Filtro de Aire', codigo: 'PRO-005', stock: 12, precio: 40, thumbClass: 't5' },
-  { producto: 'Liquido Refrigerante', codigo: 'PRO-006', stock: 8, precio: 35, thumbClass: 't6' },
-  { producto: 'Bujias', codigo: 'PRO-007', stock: 30, precio: 25, thumbClass: 't7' },
-  { producto: 'Discos de Freno', codigo: 'PRO-008', stock: 4, precio: 200, thumbClass: 't8' },
-  { producto: 'Correa de Distribucion', codigo: 'PRO-009', stock: 2, precio: 180, thumbClass: 't1' },
-  { producto: 'Alternador', codigo: 'PRO-010', stock: 9, precio: 350, thumbClass: 't3' }
-]
+const items = ref([])
+const onlyActive = ref(true)
+const loading = ref(false)
+const showModal = ref(false)
+const modalMode = ref('create')
+const modalError = ref('')
+const editingId = ref(null)
+
+const form = ref({
+  nombre: '',
+  marca: '',
+  descripcion: '',
+  stock_actual: 0,
+  stock_minimo: 0,
+  precio_compra: 0,
+  precio_venta: 0,
+  estado: true,
+})
 
 const filteredItems = computed(() => {
   const term = search.value.trim().toLowerCase()
-  if (!term) return items
-  return items.filter((item) => {
-    return item.producto.toLowerCase().includes(term) || item.codigo.toLowerCase().includes(term)
+  if (!term) return items.value
+  return items.value.filter((item) => {
+    return (
+      item.nombre.toLowerCase().includes(term) ||
+      String(item.descripcion || '').toLowerCase().includes(term)
+    )
   })
 })
 
@@ -187,17 +252,148 @@ watch(totalPages, (value) => {
   if (currentPage.value > value) currentPage.value = value
 })
 
-const stockLabel = (stock) => {
-  if (stock <= 0) return 'Agotado'
-  if (stock <= 8) return 'Bajo stock'
+const stockLabel = (stockActual, stockMinimo) => {
+  if (stockActual <= 0) return 'Agotado'
+  if (stockActual <= stockMinimo) return 'Bajo stock'
   return 'Disponible'
 }
 
-const stockTone = (stock) => {
-  if (stock <= 0) return 'danger'
-  if (stock <= 8) return 'warning'
+const stockTone = (stockActual, stockMinimo) => {
+  if (stockActual <= 0) return 'danger'
+  if (stockActual <= stockMinimo) return 'warning'
   return 'ok'
 }
+
+const thumbClassFor = (index) => {
+  const classes = ['t1', 't2', 't3', 't4', 't5', 't6', 't7', 't8']
+  return classes[index % classes.length]
+}
+
+const loadRepuestos = async () => {
+  const { data } = await api.get('/repuestos', {
+    params: { activos: onlyActive.value ? 1 : 0 },
+  })
+  items.value = data.map((item, index) => ({
+    ...item,
+    thumbClass: thumbClassFor(index),
+  }))
+}
+
+const resetForm = () => {
+  form.value = {
+    nombre: '',
+    marca: '',
+    descripcion: '',
+    stock_actual: 0,
+    stock_minimo: 0,
+    precio_compra: 0,
+    precio_venta: 0,
+    estado: true,
+  }
+  modalError.value = ''
+  editingId.value = null
+}
+
+const openCreateModal = () => {
+  modalMode.value = 'create'
+  resetForm()
+  showModal.value = true
+}
+
+const openEditModal = (item) => {
+  modalMode.value = 'edit'
+  form.value = {
+    nombre: item.nombre,
+    marca: item.marca || '',
+    descripcion: item.descripcion || '',
+    stock_actual: item.stock_actual,
+    stock_minimo: item.stock_minimo,
+    precio_compra: item.precio_compra,
+    precio_venta: item.precio_venta,
+    estado: item.estado,
+  }
+  modalError.value = ''
+  editingId.value = item.id_repuesto
+  showModal.value = true
+}
+
+const closeModal = () => {
+  showModal.value = false
+  resetForm()
+}
+
+const saveRepuesto = async () => {
+  if (!form.value.nombre) {
+    modalError.value = 'El codigo de repuesto es obligatorio'
+    return
+  }
+
+  loading.value = true
+  modalError.value = ''
+
+  try {
+    const payload = {
+      nombre: form.value.nombre,
+      marca: form.value.marca || null,
+      descripcion: form.value.descripcion || null,
+      stock_actual: Number(form.value.stock_actual),
+      stock_minimo: Number(form.value.stock_minimo),
+      precio_compra: Number(form.value.precio_compra),
+      precio_venta: Number(form.value.precio_venta),
+      estado: form.value.estado,
+    }
+
+    if (modalMode.value === 'create') {
+      await api.post('/repuestos', payload)
+    } else {
+      await api.put(`/repuestos/${editingId.value}`, payload)
+    }
+
+    await loadRepuestos()
+    closeModal()
+  } catch (error) {
+    const apiErrors = error.response?.data?.errors
+    if (apiErrors?.nombre?.length) {
+      codigoError.value = apiErrors.nombre[0]
+    }
+    modalError.value = error.response?.data?.message || (codigoError.value ? '' : 'No se pudo guardar el repuesto')
+  } finally {
+    loading.value = false
+  }
+}
+
+const deleteRepuesto = async (id) => {
+  if (!window.confirm('¿Eliminar repuesto? Se marcara como inactivo.')) return
+
+  loading.value = true
+  try {
+    await api.delete(`/repuestos/${id}`)
+    await loadRepuestos()
+  } finally {
+    loading.value = false
+  }
+}
+
+watch(onlyActive, () => {
+  loadRepuestos()
+})
+
+onMounted(async () => {
+  await loadRepuestos()
+
+  const highlightNombre = route.query.highlight
+  if (highlightNombre) {
+    const idx = items.value.findIndex((i) => i.nombre === highlightNombre)
+    if (idx !== -1) {
+      currentPage.value = Math.ceil((idx + 1) / itemsPerPage)
+      highlightedId.value = items.value[idx].id_repuesto
+      await nextTick()
+      const el = document.getElementById(`row-${highlightedId.value}`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setTimeout(() => { highlightedId.value = null }, 3500)
+    }
+  }
+})
 </script>
 
 <style scoped>
@@ -415,6 +611,7 @@ const stockTone = (stock) => {
 
 .search-wrap input {
   width: 100%;
+  box-sizing: border-box;
   border: 1px solid #d6dce5;
   border-radius: 18px;
   padding: 10px 38px 10px 14px;
@@ -446,13 +643,23 @@ thead th {
   font-size: 12px;
   padding: 9px 10px;
   border-bottom: 1px solid #d8dde6;
+  white-space: nowrap;
 }
+
+thead th:nth-child(1) { width: 150px; }
+thead th:nth-child(3) { width: 90px; }
+thead th:nth-child(4) { width: 90px; }
+thead th:nth-child(5) { width: 90px; }
+thead th:nth-child(6) { width: 90px; }
+thead th:nth-child(7) { width: 100px; }
+thead th:nth-child(8) { width: 80px; }
 
 tbody td {
   font-size: 13px;
   color: #2c3245;
   padding: 8px 10px;
   border-bottom: 1px solid #eceff4;
+  vertical-align: middle;
 }
 
 .product-cell {
@@ -530,11 +737,110 @@ tbody td {
   padding: 18px;
 }
 
+@keyframes blink-row {
+  0%, 100% { background: transparent; }
+  50% { background: #fff3b0; }
+}
+
+.row-blink {
+  animation: blink-row 0.7s ease 5;
+}
+
 .pager {
   margin-top: 12px;
   display: flex;
   justify-content: center;
   gap: 8px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 1200;
+}
+
+.modal {
+  width: min(460px, 94vw);
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.modal h3 {
+  margin: 0 0 10px;
+  color: #2f3858;
+  font-family: 'Cinzel', serif;
+}
+
+.modal label {
+  display: block;
+  font-weight: 700;
+  margin: 10px 0 6px;
+}
+
+.modal input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd3de;
+  border-radius: 8px;
+  padding: 9px 10px;
+}
+
+.modal textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd3de;
+  border-radius: 8px;
+  padding: 9px 10px;
+  resize: vertical;
+}
+
+.inline-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inline-check input {
+  width: auto;
+}
+
+.actions-row {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.actions-row button {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  background: #2f6bc4;
+  color: #fff;
+  cursor: pointer;
+}
+
+.actions-row .ghost {
+  background: #e4e8ef;
+  color: #1f2937;
+}
+
+.field-error {
+  color: #d32f2f;
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.description-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .page-btn {
