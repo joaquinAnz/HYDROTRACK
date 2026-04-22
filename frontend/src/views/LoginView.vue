@@ -42,7 +42,6 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../services/api'
 import Navbar from '../components/Navbar.vue'
-import header from '../assets/Header.png'
 
 const router = useRouter()
 
@@ -76,14 +75,7 @@ const iniciarSesion = async () => {
       sessionStorage.setItem('user', JSON.stringify(user))
     }
 
-    // 🔥 REDIRECCIÓN POR ROL
-    if (user.rol === 'Administrador') {
-      router.push('/admin')
-    } else if (user.rol === 'Tecnico') {
-      router.push('/tecnico')
-    } else {
-      router.push('/')
-    }
+    router.push('/dashboard')
 
   } catch (err) {
     error.value = err.response?.data?.message || 'Error al iniciar sesión'
