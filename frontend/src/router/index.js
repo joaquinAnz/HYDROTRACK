@@ -2,14 +2,19 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 // Vistas
 import LoginView from '../views/LoginView.vue'
+
 import OrdenTrabajo from '../views/OrdenTrabajoView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import GestionView from '../views/GestionView.vue'
 //import InventarioView from '../views/InventarioView.vue'
 
+import InventarioView from '../views/InventarioView.vue'
+
+
 const routes = [
   // Login
   { path: '/', component: LoginView },
+
 
   // aneles por rol
   { path: '/admin', component: { template: '<h1>Admin Panel</h1>' } },
@@ -43,6 +48,9 @@ const routes = [
     component: InventarioView,
     meta: { requiresAuth: true }
   }*/
+
+  { path: '/inventario', component: InventarioView, meta: { requiresAuth: true } }
+
 ]
 
 const router = createRouter({
@@ -50,8 +58,6 @@ const router = createRouter({
   routes
 })
 
-
-// 🔒 Middleware de autenticación
 router.beforeEach((to, _from, next) => {
   if (!to.meta.requiresAuth) {
     next()

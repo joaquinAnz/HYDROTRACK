@@ -87,3 +87,11 @@ Route::prefix('detalle-servicio-orden')->group(function () {
     Route::put('/{id}', [DetalleServicioOrdenController::class, 'update']);
     Route::delete('/{id}', [DetalleServicioOrdenController::class, 'destroy']);
 });
+
+
+
+Route::get('/repuestos', [RepuestoController::class, 'index']);
+Route::post('/repuestos', [RepuestoController::class, 'store']);
+Route::put('/repuestos/{id}', [RepuestoController::class, 'update']);
+Route::delete('/repuestos/{id}', [RepuestoController::class, 'destroy']);
+

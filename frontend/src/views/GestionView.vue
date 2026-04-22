@@ -1,6 +1,7 @@
 <template>
   <div class="gestion-shell">
     <header class="topbar">
+
       <Navbar />
     </header>
 

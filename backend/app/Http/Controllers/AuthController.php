@@ -41,7 +41,8 @@ class AuthController extends Controller
             'message' => 'Login exitoso',
             'usuario' => [
                 'id_usuario' => $usuario->id_usuario,
-                'nombre' => $usuario->nombre,
+                'nombres' => $usuario->nombres,
+                'apellidos' => $usuario->apellidos,
                 'usuario' => $usuario->usuario,
                 'id_rol' => $usuario->id_rol,
                 'rol' => $usuario->rol?->nombre
