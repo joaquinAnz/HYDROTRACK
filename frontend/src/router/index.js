@@ -1,14 +1,56 @@
 import { createRouter, createWebHistory } from 'vue-router'
+
+// Vistas
 import LoginView from '../views/LoginView.vue'
+
+import OrdenTrabajo from '../views/OrdenTrabajoView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import GestionView from '../views/GestionView.vue'
+//import InventarioView from '../views/InventarioView.vue'
+
 import InventarioView from '../views/InventarioView.vue'
 
+
 const routes = [
+  // Login
   { path: '/', component: LoginView },
-  { path: '/dashboard', component: DashboardView, meta: { requiresAuth: true } },
-  { path: '/usuarios', component: GestionView, meta: { requiresAuth: true } },
+
+
+  // aneles por rol
+  { path: '/admin', component: { template: '<h1>Admin Panel</h1>' } },
+  { path: '/tecnico', component: { template: '<h1>Tecnico Panel</h1>' } },
+
+  // Ordenes
+  {
+    path: '/ordenes',
+    name: 'Ordenes',
+    component: OrdenTrabajo,
+    meta: { requiresAuth: true }
+  },
+
+  // Dashboard
+  {
+    path: '/dashboard',
+    component: DashboardView,
+    meta: { requiresAuth: true }
+  },
+
+  // Gestión de usuarios
+  {
+    path: '/usuarios',
+    component: GestionView,
+    meta: { requiresAuth: true }
+  },
+
+  // Inventario
+  /*{
+    path: '/inventario',
+    component: InventarioView,
+    meta: { requiresAuth: true }
+  }*/
+
   { path: '/inventario', component: InventarioView, meta: { requiresAuth: true } }
+
 ]
 
 const router = createRouter({

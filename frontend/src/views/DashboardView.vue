@@ -7,7 +7,7 @@
           <span></span>
           <span></span>
         </div>
-
+        
         <div class="brand">
           <img :src="logo" alt="Hydrotrack" class="brand-logo" />
           <span class="brand-name">HYDROTRACK</span>
@@ -71,6 +71,7 @@
                   <p class="alert-title">{{ alert.title }}</p>
                   <p class="alert-sub">{{ alert.detail }}</p>
                 </div>
+
                 <button type="button" @click="goToAlert(alert)">Ver</button>
               </div>
             </div>
@@ -132,6 +133,7 @@
 </template>
 
 <script setup>
+
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import heroImage from '../assets/hero.png'
@@ -184,6 +186,7 @@ const orders = [
   }
 ]
 
+
 const alerts = ref([
   {
     title: 'Orden #003 esta retrasada',
@@ -195,7 +198,6 @@ const alerts = ref([
     detail: 'Bs 140 por servicio pendiente',
     tone: 'success'
   }
-])
 
 onMounted(async () => {
   try {
