@@ -5,7 +5,9 @@ import LoginView from '../views/LoginView.vue'
 
 import OrdenTrabajo from '../views/OrdenTrabajoView.vue'
 import DashboardView from '../views/DashboardView.vue'
+import DashboardOrdenesView from '../views/DashboardOrdenesView.vue'
 import GestionView from '../views/GestionView.vue'
+import VehiculosView from '../views/VehiculosView.vue'
 //import InventarioView from '../views/InventarioView.vue'
 
 import InventarioView from '../views/InventarioView.vue'
@@ -13,12 +15,11 @@ import InventarioView from '../views/InventarioView.vue'
 
 const routes = [
   // Login
-  { path: '/', component: LoginView },
+  { path: '/', name: 'Login', component: LoginView },
 
-
-  // aneles por rol
-  { path: '/admin', component: { template: '<h1>Admin Panel</h1>' } },
-  { path: '/tecnico', component: { template: '<h1>Tecnico Panel</h1>' } },
+  // Accesos antiguos por rol
+  { path: '/admin', redirect: '/dashboard' },
+  { path: '/tecnico', redirect: '/dashboard' },
 
   // Ordenes
   {
@@ -31,14 +32,30 @@ const routes = [
   // Dashboard
   {
     path: '/dashboard',
+    name: 'Dashboard',
     component: DashboardView,
+    meta: { requiresAuth: true }
+  },
+
+  {
+    path: '/dashboard/ordenes',
+    name: 'DashboardOrdenes',
+    component: DashboardOrdenesView,
     meta: { requiresAuth: true }
   },
 
   // Gestión de usuarios
   {
     path: '/usuarios',
+    name: 'Usuarios',
     component: GestionView,
+    meta: { requiresAuth: true }
+  },
+
+  {
+    path: '/vehiculos',
+    name: 'Vehiculos',
+    component: VehiculosView,
     meta: { requiresAuth: true }
   },
 
@@ -49,7 +66,15 @@ const routes = [
     meta: { requiresAuth: true }
   }*/
 
-  { path: '/inventario', component: InventarioView, meta: { requiresAuth: true } }
+  {
+    path: '/inventario',
+    name: 'Inventario',
+    component: InventarioView,
+    meta: { requiresAuth: true }
+  },
+
+  // Fallback
+  { path: '/:pathMatch(.*)*', redirect: '/dashboard' }
 
 ]
 
@@ -58,27 +83,24 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, _from, next) => {
+router.beforeEach((to, _from) => {
   if (!to.meta.requiresAuth) {
-    next()
-    return
+    return true
   }
 
   const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user')
 
   if (!storedUser) {
-    next('/')
-    return
+    return '/'
   }
 
   try {
     JSON.parse(storedUser)
   } catch {
-    next('/')
-    return
+    return '/'
   }
 
-  next()
+  return true
 })
 
 export default router

@@ -14,11 +14,13 @@ class ServicioAdicional extends Model
         'nombre',
         'descripcion',
         'costo_base',
+        'precio',
         'estado',
     ];
 
     protected $casts = [
         'costo_base' => 'decimal:2',
+        'precio' => 'decimal:2',
         'estado' => 'boolean',
     ];
 }

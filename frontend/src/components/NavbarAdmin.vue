@@ -5,13 +5,24 @@
       <div class="logo-text">HYDROTRACK</div>
 
       <ul class="menu">
-        <li>DASHBOARD</li>
-        <li>CLIENTES</li>
-        <li>INVENTARIO</li>
-        <li>ORDENES</li>
-        <li>PAGOS</li>
-        <li>USUARIOS</li>
-        <li>REPORTES</li>
+        <li>
+          <router-link to="/dashboard">DASHBOARD</router-link>
+        </li>
+        <li>
+          <router-link to="/dashboard/ordenes">LISTA ORDENES</router-link>
+        </li>
+        <li>
+          <router-link to="/inventario">INVENTARIO</router-link>
+        </li>
+        <li>
+          <router-link to="/ordenes">ORDENES</router-link>
+        </li>
+        <li>
+          <router-link to="/usuarios">USUARIOS</router-link>
+        </li>
+        <li>
+          <router-link to="/vehiculos">VEHICULOS</router-link>
+        </li>
       </ul>
     </div>
 
@@ -80,18 +91,24 @@ import logo from '../assets/logo.png'
 }
 
 .menu li {
-  font-size: 13px;
-  letter-spacing: 1px;
-  cursor: pointer;
-  opacity: 0.85;
-  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
-.menu li:hover {
-  opacity: 1;
-  border-bottom: 2px solid white;
+.menu a {
+  font-size: 13px;
+  letter-spacing: 1px;
+  opacity: 0.85;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: #fff;
   padding-bottom: 4px;
+  border-bottom: 2px solid transparent;
+}
+
+.menu a:hover,
+.menu a.router-link-active {
+  opacity: 1;
+  border-bottom-color: #fff;
 }
 
 .icons {

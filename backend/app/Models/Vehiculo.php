@@ -13,9 +13,15 @@ class Vehiculo extends Model
     protected $fillable = [
         'id_cliente',
         'placa',
+        'descripcion',
+        'estado',
         'marca',
         'modelo',
         'anio',
+    ];
+
+    protected $casts = [
+        'anio' => 'integer',
     ];
 
     public function cliente()

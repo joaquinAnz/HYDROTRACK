@@ -1,33 +1,8 @@
 <template>
   <div class="inventory-shell">
     <div class="inventory-frame">
-      <header class="topbar">
-        <div class="menu-toggle" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-
-        <div class="brand">
-          <img :src="logo" alt="Hydrotrack" class="brand-logo" />
-          <span class="brand-name">HYDROTRACK</span>
-        </div>
-
-        <nav class="top-links">
-          <router-link to="/dashboard">DASHBOARD</router-link>
-          <a href="#">MIS SERVICIOS</a>
-          <a href="#">CLIENTES</a>
-          <router-link to="/inventario">INVENTARIOS</router-link>
-          <a href="#">PAGOS</a>
-          <router-link to="/usuarios">USUARIOS</router-link>
-          <a href="#">REPORTES</a>
-        </nav>
-
-        <div class="top-icons">
-          <span>o</span>
-          <span>o</span>
-        </div>
-      </header>
+      <NavbarAdmin />
+      <div class="navbar-spacer"></div>
 
       <main class="inventory-content">
         <section class="hero-grid">
@@ -196,6 +171,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '../services/api'
+import NavbarAdmin from '../components/NavbarAdmin.vue'
 
 const route = useRoute()
 const highlightedId = ref(null)
@@ -412,6 +388,10 @@ onMounted(async () => {
   border: 1px solid #9ba5b5;
   background: #f5f6f8;
   box-shadow: 0 20px 60px rgba(8, 15, 32, 0.24);
+}
+
+.navbar-spacer {
+  height: 70px;
 }
 
 .topbar {

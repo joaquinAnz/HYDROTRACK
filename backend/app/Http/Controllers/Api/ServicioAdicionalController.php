@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ServicioAdicional;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class ServicioAdicionalController extends Controller
 {
@@ -21,19 +22,47 @@ class ServicioAdicionalController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $request->validate([
-            'nombre' => 'required|string|max:100|unique:servicios_adicionales,nombre',
-            'descripcion' => 'nullable|string',
-            'costo_base' => 'required|numeric|min:0',
-            'estado' => 'nullable|boolean',
-        ]);
+        $hasDescripcion = Schema::hasColumn('servicios_adicionales', 'descripcion');
+        $hasCostoBase = Schema::hasColumn('servicios_adicionales', 'costo_base');
+        $hasPrecio = Schema::hasColumn('servicios_adicionales', 'precio');
 
-        $servicio = ServicioAdicional::create([
+        $rules = [
+            'nombre' => 'required|string|max:100|unique:servicios_adicionales,nombre',
+            'estado' => 'nullable|boolean',
+        ];
+
+        if ($hasDescripcion) {
+            $rules['descripcion'] = 'nullable|string';
+        }
+
+        if ($hasCostoBase) {
+            $rules['costo_base'] = 'required_without:precio|numeric|min:0';
+        }
+
+        if ($hasPrecio) {
+            $rules['precio'] = 'required_without:costo_base|numeric|min:0';
+        }
+
+        $request->validate($rules);
+
+        $payload = [
             'nombre' => $request->nombre,
-            'descripcion' => $request->descripcion,
-            'costo_base' => $request->costo_base,
             'estado' => $request->estado ?? 1,
-        ]);
+        ];
+
+        if ($hasDescripcion) {
+            $payload['descripcion'] = $request->descripcion;
+        }
+
+        if ($hasCostoBase) {
+            $payload['costo_base'] = $request->input('costo_base', $request->input('precio', 0));
+        }
+
+        if ($hasPrecio) {
+            $payload['precio'] = $request->input('precio', $request->input('costo_base', 0));
+        }
+
+        $servicio = ServicioAdicional::create($payload);
 
         return response()->json([
             'message' => 'Servicio adicional creado correctamente',
@@ -67,19 +96,47 @@ class ServicioAdicionalController extends Controller
             ], 404);
         }
 
-        $request->validate([
-            'nombre' => 'required|string|max:100|unique:servicios_adicionales,nombre,' . $id . ',id_servicio',
-            'descripcion' => 'nullable|string',
-            'costo_base' => 'required|numeric|min:0',
-            'estado' => 'nullable|boolean',
-        ]);
+        $hasDescripcion = Schema::hasColumn('servicios_adicionales', 'descripcion');
+        $hasCostoBase = Schema::hasColumn('servicios_adicionales', 'costo_base');
+        $hasPrecio = Schema::hasColumn('servicios_adicionales', 'precio');
 
-        $servicio->update([
+        $rules = [
+            'nombre' => 'required|string|max:100|unique:servicios_adicionales,nombre,' . $id . ',id_servicio',
+            'estado' => 'nullable|boolean',
+        ];
+
+        if ($hasDescripcion) {
+            $rules['descripcion'] = 'nullable|string';
+        }
+
+        if ($hasCostoBase) {
+            $rules['costo_base'] = 'required_without:precio|numeric|min:0';
+        }
+
+        if ($hasPrecio) {
+            $rules['precio'] = 'required_without:costo_base|numeric|min:0';
+        }
+
+        $request->validate($rules);
+
+        $payload = [
             'nombre' => $request->nombre,
-            'descripcion' => $request->descripcion,
-            'costo_base' => $request->costo_base,
             'estado' => $request->estado ?? $servicio->estado,
-        ]);
+        ];
+
+        if ($hasDescripcion) {
+            $payload['descripcion'] = $request->descripcion;
+        }
+
+        if ($hasCostoBase) {
+            $payload['costo_base'] = $request->input('costo_base', $request->input('precio', 0));
+        }
+
+        if ($hasPrecio) {
+            $payload['precio'] = $request->input('precio', $request->input('costo_base', 0));
+        }
+
+        $servicio->update($payload);
 
         return response()->json([
             'message' => 'Servicio adicional actualizado correctamente',

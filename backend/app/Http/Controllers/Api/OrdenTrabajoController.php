@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreOrdenTrabajoRequest;
 use App\Http\Requests\UpdateOrdenTrabajoRequest;
+use App\Models\Cliente;
+use App\Models\EstadoOrden;
 use App\Models\OrdenTrabajo;
+use App\Models\Vehiculo;
 use Illuminate\Http\JsonResponse;
 
 class OrdenTrabajoController extends Controller
@@ -13,12 +16,15 @@ class OrdenTrabajoController extends Controller
     public function index(): JsonResponse
     {
         $ordenes = OrdenTrabajo::with([
-            'vehiculo',
+            'vehiculo.cliente',
             'tipoServicio', // 👈 NUEVO
             'tecnico',
             'usuarioRegistro',
             'estado',
-            'detallesServicio.servicio'
+            'detallesServicio.servicio',
+            'detallesRepuestos.repuesto',
+            'pagos.metodos',
+            'actualizaciones.usuario'
         ])
         ->orderByDesc('id_orden')
         ->get();
@@ -32,6 +38,21 @@ class OrdenTrabajoController extends Controller
     public function store(StoreOrdenTrabajoRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $modoAtencion = $request->input('modo_atencion', 'servicio_tecnico');
+        $esSoloVenta = $modoAtencion === 'solo_venta';
+
+        if ($esSoloVenta) {
+            $idClienteVenta = (int) ($data['id_cliente'] ?? $this->obtenerClienteGeneralId());
+            $data['id_vehiculo'] = $this->obtenerVehiculoMostradorId($idClienteVenta);
+            $data['descripcion_falla'] = $data['descripcion_falla'] ?? 'Venta de repuestos en mostrador';
+            $data['diagnostico'] = $data['diagnostico'] ?? null;
+            $data['costo_mano_obra'] = 0;
+            $data['id_tecnico'] = null;
+
+            if (empty($data['id_estado'])) {
+                $data['id_estado'] = $this->obtenerEstadoPorDefectoParaVenta();
+            }
+        }
 
         $data['codigo_seguimiento'] = $this->generarCodigoSeguimiento();
         $data['fecha_ingreso'] = now();
@@ -40,13 +61,23 @@ class OrdenTrabajoController extends Controller
 
         $orden = OrdenTrabajo::create($data);
 
+        $vehiculo = Vehiculo::find($data['id_vehiculo'] ?? null);
+        if (!$esSoloVenta && $vehiculo && $vehiculo->estado !== 'eliminado') {
+            $vehiculo->update([
+                'estado' => 'en_taller',
+            ]);
+        }
+
         $orden->load([
-            'vehiculo',
+            'vehiculo.cliente',
             'tipoServicio', // 👈 NUEVO
             'tecnico',
             'usuarioRegistro',
             'estado',
-            'detallesServicio.servicio'
+            'detallesServicio.servicio',
+            'detallesRepuestos.repuesto',
+            'pagos.metodos',
+            'actualizaciones.usuario'
         ]);
 
         return response()->json([
@@ -58,12 +89,15 @@ class OrdenTrabajoController extends Controller
     public function show(int $id): JsonResponse
     {
         $orden = OrdenTrabajo::with([
-            'vehiculo',
+            'vehiculo.cliente',
             'tipoServicio', // 👈 NUEVO
             'tecnico',
             'usuarioRegistro',
             'estado',
-            'detallesServicio.servicio'
+            'detallesServicio.servicio',
+            'detallesRepuestos.repuesto',
+            'pagos.metodos',
+            'actualizaciones.usuario'
         ])->find($id);
 
         if (!$orden) {
@@ -91,12 +125,15 @@ class OrdenTrabajoController extends Controller
         $orden->update($request->validated());
 
         $orden->load([
-            'vehiculo',
+            'vehiculo.cliente',
             'tipoServicio', // 👈 NUEVO
             'tecnico',
             'usuarioRegistro',
             'estado',
-            'detallesServicio.servicio'
+            'detallesServicio.servicio',
+            'detallesRepuestos.repuesto',
+            'pagos.metodos',
+            'actualizaciones.usuario'
         ]);
 
         return response()->json([
@@ -129,5 +166,63 @@ class OrdenTrabajoController extends Controller
         } while (OrdenTrabajo::where('codigo_seguimiento', $codigo)->exists());
 
         return $codigo;
+    }
+
+    private function obtenerVehiculoMostradorId(int $idCliente): int
+    {
+        $placaVirtual = 'MST-' . $idCliente;
+
+        $vehiculoMostrador = Vehiculo::firstOrCreate(
+            ['placa' => $placaVirtual],
+            [
+                'id_cliente' => $idCliente,
+                'descripcion' => 'Vehiculo virtual para ventas en mostrador',
+                'estado' => 'activo',
+                'marca' => 'N/A',
+                'modelo' => 'N/A',
+                'anio' => null,
+            ]
+        );
+
+        return (int) $vehiculoMostrador->id_vehiculo;
+    }
+
+    private function obtenerClienteGeneralId(): int
+    {
+        $clienteGeneral = Cliente::firstOrCreate(
+            ['carnet_identidad' => '0000000'],
+            [
+                'nombres' => 'CLIENTE',
+                'apellidos' => 'GENERAL',
+                'telefono' => '0000000',
+                'estado' => true,
+            ]
+        );
+
+        return (int) $clienteGeneral->id_cliente;
+    }
+
+    private function obtenerEstadoPorDefectoParaVenta(): int
+    {
+        $preferidos = ['FINALIZADO', 'EN PROCESO', 'PENDIENTE'];
+
+        $estado = EstadoOrden::all()->first(function (EstadoOrden $item) use ($preferidos) {
+            return in_array((string) $item->nombre, $preferidos, true);
+        });
+
+        if ($estado) {
+            return (int) $estado->id_estado;
+        }
+
+        $estadoExistente = EstadoOrden::query()->first();
+        if ($estadoExistente) {
+            return (int) $estadoExistente->id_estado;
+        }
+
+        $nuevoEstado = new EstadoOrden();
+        $nuevoEstado->nombre = 'PENDIENTE';
+        $nuevoEstado->save();
+
+        return (int) $nuevoEstado->id_estado;
     }
 }

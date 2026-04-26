@@ -6,20 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Models\DetalleRepuestoOrden;
 use App\Models\DetalleServicioOrden;
 use App\Models\OrdenTrabajo;
+use App\Models\Repuesto;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class DetalleServicioOrdenController extends Controller
+class DetalleRepuestoOrdenController extends Controller
 {
     public function index(): JsonResponse
     {
-        $detalles = DetalleServicioOrden::with(['orden', 'servicio'])
-            ->orderByDesc('id_detalle_servicio')
+        $detalles = DetalleRepuestoOrden::with(['orden', 'repuesto'])
+            ->orderByDesc('id_detalle_repuesto')
             ->get();
 
         return response()->json([
-            'message' => 'Lista de detalles de servicio por orden',
-            'data' => $detalles
+            'message' => 'Lista de detalles de repuesto por orden',
+            'data' => $detalles,
         ]);
     }
 
@@ -27,86 +28,53 @@ class DetalleServicioOrdenController extends Controller
     {
         $request->validate([
             'id_orden' => 'required|exists:ordenes_trabajo,id_orden',
-            'id_servicio' => 'required|exists:servicios_adicionales,id_servicio',
+            'id_repuesto' => 'required|exists:repuestos,id_repuesto',
             'cantidad' => 'required|integer|min:1',
             'precio_unitario' => 'required|numeric|min:0',
         ]);
 
-        $detalle = DetalleServicioOrden::create([
+        $repuesto = Repuesto::findOrFail($request->id_repuesto);
+        if ((int) $repuesto->stock_actual < (int) $request->cantidad) {
+            return response()->json([
+                'message' => 'Stock insuficiente para el repuesto seleccionado',
+            ], 422);
+        }
+
+        $detalle = DetalleRepuestoOrden::create([
             'id_orden' => $request->id_orden,
-            'id_servicio' => $request->id_servicio,
+            'id_repuesto' => $request->id_repuesto,
             'cantidad' => $request->cantidad,
-            'precio' => $request->precio_unitario,
             'precio_unitario' => $request->precio_unitario,
+        ]);
+
+        $repuesto->update([
+            'stock_actual' => (int) $repuesto->stock_actual - (int) $request->cantidad,
         ]);
 
         $this->recalcularTotalOrden($request->id_orden);
-
-        $detalle->load(['orden', 'servicio']);
+        $detalle->load(['orden', 'repuesto']);
 
         return response()->json([
-            'message' => 'Servicio agregado a la orden correctamente',
-            'data' => $detalle
+            'message' => 'Repuesto agregado a la orden correctamente',
+            'data' => $detalle,
         ], 201);
-    }
-
-    public function show(int $id): JsonResponse
-    {
-        $detalle = DetalleServicioOrden::with(['orden', 'servicio'])->find($id);
-
-        if (!$detalle) {
-            return response()->json([
-                'message' => 'Detalle de servicio no encontrado'
-            ], 404);
-        }
-
-        return response()->json([
-            'message' => 'Detalle del servicio de la orden',
-            'data' => $detalle
-        ]);
-    }
-
-    public function update(Request $request, int $id): JsonResponse
-    {
-        $detalle = DetalleServicioOrden::find($id);
-
-        if (!$detalle) {
-            return response()->json([
-                'message' => 'Detalle de servicio no encontrado'
-            ], 404);
-        }
-
-        $request->validate([
-            'id_servicio' => 'required|exists:servicios_adicionales,id_servicio',
-            'cantidad' => 'required|integer|min:1',
-            'precio_unitario' => 'required|numeric|min:0',
-        ]);
-
-        $detalle->update([
-            'id_servicio' => $request->id_servicio,
-            'cantidad' => $request->cantidad,
-            'precio' => $request->precio_unitario,
-            'precio_unitario' => $request->precio_unitario,
-        ]);
-
-        $this->recalcularTotalOrden($detalle->id_orden);
-
-        $detalle->load(['orden', 'servicio']);
-
-        return response()->json([
-            'message' => 'Detalle de servicio actualizado correctamente',
-            'data' => $detalle
-        ]);
     }
 
     public function destroy(int $id): JsonResponse
     {
-        $detalle = DetalleServicioOrden::find($id);
+        $detalle = DetalleRepuestoOrden::find($id);
 
         if (!$detalle) {
             return response()->json([
-                'message' => 'Detalle de servicio no encontrado'
+                'message' => 'Detalle de repuesto no encontrado',
             ], 404);
+        }
+
+        $repuesto = Repuesto::find($detalle->id_repuesto);
+        if ($repuesto) {
+            $repuesto->update([
+                'stock_actual' => (int) $repuesto->stock_actual + (int) $detalle->cantidad,
+            ]);
         }
 
         $idOrden = $detalle->id_orden;
@@ -115,7 +83,36 @@ class DetalleServicioOrdenController extends Controller
         $this->recalcularTotalOrden($idOrden);
 
         return response()->json([
-            'message' => 'Detalle de servicio eliminado correctamente'
+            'message' => 'Detalle de repuesto eliminado correctamente',
+        ]);
+    }
+
+    public function update(Request $request, int $id): JsonResponse
+    {
+        $detalle = DetalleRepuestoOrden::find($id);
+
+        if (!$detalle) {
+            return response()->json([
+                'message' => 'Detalle de repuesto no encontrado',
+            ], 404);
+        }
+
+        $request->validate([
+            'cantidad' => 'required|integer|min:1',
+            'precio_unitario' => 'required|numeric|min:0',
+        ]);
+
+        $detalle->update([
+            'cantidad' => $request->cantidad,
+            'precio_unitario' => $request->precio_unitario,
+        ]);
+
+        $this->recalcularTotalOrden($detalle->id_orden);
+        $detalle->load(['orden', 'repuesto']);
+
+        return response()->json([
+            'message' => 'Detalle de repuesto actualizado correctamente',
+            'data' => $detalle,
         ]);
     }
 
@@ -129,16 +126,11 @@ class DetalleServicioOrdenController extends Controller
 
         $totalServicios = DetalleServicioOrden::where('id_orden', $idOrden)
             ->get()
-            ->sum(function ($item) {
-                $precioUnitario = $item->precio_unitario ?? $item->precio ?? 0;
-                return $item->cantidad * $precioUnitario;
-            });
+            ->sum(fn ($item) => $item->cantidad * $item->precio_unitario);
 
         $totalRepuestos = DetalleRepuestoOrden::where('id_orden', $idOrden)
             ->get()
-            ->sum(function ($item) {
-                return $item->cantidad * $item->precio_unitario;
-            });
+            ->sum(fn ($item) => $item->cantidad * $item->precio_unitario);
 
         $nuevoTotal = ($orden->costo_mano_obra ?? 0) + $totalServicios + $totalRepuestos;
         $orden->setAttribute('total_orden', $nuevoTotal);

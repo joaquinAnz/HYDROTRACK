@@ -1,4 +1,4 @@
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import api from '../services/api'
 
 export const activeTab = ref('usuarios')
@@ -13,6 +13,7 @@ export const resetPasswordError = ref('')
 
 export const usuarios = ref([])
 export const clientes = ref([])
+export const vehiculos = ref([])
 export const roles = ref([])
 
 export const usuarioForm = ref({
@@ -29,12 +30,24 @@ export const clienteForm = ref({
   nombres: '',
   apellidos: '',
   carnet_identidad: '',
+  telefono: '',
   estado: true
+})
+
+export const vehiculoForm = ref({
+  placa: '',
+  id_cliente: null,
+  descripcion: '',
+  estado: 'activo'
 })
 
 export const currentEditingId = ref(null) // ID del registro siendo editado/visto
 
-export const currentTabLabel = computed(() => (activeTab.value === 'usuarios' ? 'Empleado' : 'Cliente'))
+export const currentTabLabel = computed(() => {
+  if (activeTab.value === 'usuarios') return 'Empleado'
+  if (activeTab.value === 'vehiculos') return 'Vehiculo'
+  return 'Cliente'
+})
 
 export const employeeRoles = computed(() => {
   const allowed = ['admin', 'administrador', 'tecnico', 'ventas']
@@ -49,7 +62,8 @@ export const formatDate = (value) => {
 
 export const resetForms = () => {
   usuarioForm.value = { nombres: '', apellidos: '', telefono: '', usuario: '', password: '', id_rol: null, estado: true }
-  clienteForm.value = { nombres: '', apellidos: '', carnet_identidad: '', estado: true }
+  clienteForm.value = { nombres: '', apellidos: '', carnet_identidad: '', telefono: '', estado: true }
+  vehiculoForm.value = { placa: '', id_cliente: null, descripcion: '', estado: 'activo' }
   errorMsg.value = ''
   usuarioFieldError.value = ''
   currentEditingId.value = null
@@ -81,6 +95,11 @@ export const loadClientes = async () => {
 export const loadRoles = async () => {
   const { data } = await api.get('/roles')
   roles.value = data
+}
+
+export const loadVehiculos = async () => {
+  const { data } = await api.get('/vehiculos')
+  vehiculos.value = data?.data ?? data ?? []
 }
 
 export const createUsuario = async () => {
@@ -164,6 +183,42 @@ export const handleClienteSubmit = () => {
     createCliente()
   } else if (modalMode.value === 'edit') {
     updateCliente()
+  }
+}
+
+export const createVehiculo = async () => {
+  loading.value = true
+  errorMsg.value = ''
+  try {
+    await api.post('/vehiculos', vehiculoForm.value)
+    await loadVehiculos()
+    closeModal()
+  } catch (error) {
+    errorMsg.value = error.response?.data?.message || 'No se pudo crear el vehiculo'
+  } finally {
+    loading.value = false
+  }
+}
+
+export const updateVehiculo = async () => {
+  loading.value = true
+  errorMsg.value = ''
+  try {
+    await api.put(`/vehiculos/${currentEditingId.value}`, vehiculoForm.value)
+    await loadVehiculos()
+    closeModal()
+  } catch (error) {
+    errorMsg.value = error.response?.data?.message || 'No se pudo actualizar el vehiculo'
+  } finally {
+    loading.value = false
+  }
+}
+
+export const handleVehiculoSubmit = () => {
+  if (modalMode.value === 'create') {
+    createVehiculo()
+  } else if (modalMode.value === 'edit') {
+    updateVehiculo()
   }
 }
 
@@ -255,6 +310,7 @@ export const viewCliente = (cliente) => {
     nombres: cliente.nombres,
     apellidos: cliente.apellidos,
     carnet_identidad: cliente.carnet_identidad,
+    telefono: cliente.telefono || '',
     estado: cliente.estado
   }
   modalMode.value = 'view'
@@ -267,6 +323,7 @@ export const editCliente = (cliente) => {
     nombres: cliente.nombres,
     apellidos: cliente.apellidos,
     carnet_identidad: cliente.carnet_identidad,
+    telefono: cliente.telefono || '',
     estado: cliente.estado
   }
   modalMode.value = 'edit'
@@ -284,6 +341,45 @@ export const deleteCliente = async (id) => {
   }
 }
 
+export const viewVehiculo = (vehiculo) => {
+  currentEditingId.value = vehiculo.id_vehiculo
+  vehiculoForm.value = {
+    placa: vehiculo.placa || '',
+    id_cliente: vehiculo.id_cliente ?? null,
+    descripcion: vehiculo.descripcion || '',
+    estado: vehiculo.estado || 'activo'
+  }
+  modalMode.value = 'view'
+  showModal.value = true
+}
+
+export const editVehiculo = (vehiculo) => {
+  currentEditingId.value = vehiculo.id_vehiculo
+  vehiculoForm.value = {
+    placa: vehiculo.placa || '',
+    id_cliente: vehiculo.id_cliente ?? null,
+    descripcion: vehiculo.descripcion || '',
+    estado: vehiculo.estado || 'activo'
+  }
+  modalMode.value = 'edit'
+  showModal.value = true
+}
+
+export const deleteVehiculo = async (id) => {
+  if (confirm('¿Estas seguro de que deseas eliminar este vehiculo?')) {
+    try {
+      loading.value = true
+      errorMsg.value = ''
+      await api.delete(`/vehiculos/${id}`)
+      await loadVehiculos()
+    } catch (error) {
+      errorMsg.value = error.response?.data?.message || 'No se pudo eliminar el vehiculo'
+    } finally {
+      loading.value = false
+    }
+  }
+}
+
 watch(activeTab, () => {
   errorMsg.value = ''
   usuarioFieldError.value = ''
@@ -293,6 +389,6 @@ watch(() => usuarioForm.value.usuario, () => {
   usuarioFieldError.value = ''
 })
 
-onMounted(async () => {
-  await Promise.all([loadUsuarios(), loadClientes(), loadRoles()])
-})
+export const initGestionData = async () => {
+  await Promise.all([loadUsuarios(), loadClientes(), loadRoles(), loadVehiculos()])
+}

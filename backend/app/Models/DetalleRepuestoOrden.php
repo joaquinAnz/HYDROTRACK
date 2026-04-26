@@ -4,23 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class DetalleServicioOrden extends Model
+class DetalleRepuestoOrden extends Model
 {
-    protected $table = 'detalle_servicio_orden';
-    protected $primaryKey = 'id_detalle_servicio';
+    protected $table = 'detalle_repuesto_orden';
+    protected $primaryKey = 'id_detalle_repuesto';
     public $timestamps = false;
 
     protected $fillable = [
         'id_orden',
-        'id_servicio',
+        'id_repuesto',
         'cantidad',
-        'precio',
         'precio_unitario',
     ];
 
     protected $casts = [
         'cantidad' => 'integer',
-        'precio' => 'decimal:2',
         'precio_unitario' => 'decimal:2',
     ];
 
@@ -29,8 +27,8 @@ class DetalleServicioOrden extends Model
         return $this->belongsTo(OrdenTrabajo::class, 'id_orden', 'id_orden');
     }
 
-    public function servicio()
+    public function repuesto()
     {
-        return $this->belongsTo(ServicioAdicional::class, 'id_servicio', 'id_servicio');
+        return $this->belongsTo(Repuesto::class, 'id_repuesto', 'id_repuesto');
     }
 }

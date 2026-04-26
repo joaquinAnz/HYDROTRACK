@@ -25,6 +25,8 @@ class OrdenTrabajo extends Model
         'costo_mano_obra',
         'id_estado',
         'total_orden',
+        'total_pagado',
+        'pago_completo',
     ];
 
     protected $casts = [
@@ -32,6 +34,8 @@ class OrdenTrabajo extends Model
         'fecha_salida' => 'datetime',
         'costo_mano_obra' => 'decimal:2',
         'total_orden' => 'decimal:2',
+        'total_pagado' => 'decimal:2',
+        'pago_completo' => 'boolean',
     ];
 
     public function vehiculo()
@@ -61,5 +65,20 @@ class OrdenTrabajo extends Model
     public function detallesServicio()
     {
         return $this->hasMany(DetalleServicioOrden::class, 'id_orden', 'id_orden');
+    }
+
+    public function detallesRepuestos()
+    {
+        return $this->hasMany(DetalleRepuestoOrden::class, 'id_orden', 'id_orden');
+    }
+
+    public function pagos()
+    {
+        return $this->hasMany(PagoOrden::class, 'id_orden', 'id_orden');
+    }
+
+    public function actualizaciones()
+    {
+        return $this->hasMany(OrdenActualizacion::class, 'id_orden', 'id_orden');
     }
 }

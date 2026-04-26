@@ -10,7 +10,15 @@ class EstadoOrdenController extends Controller
 {
     public function index()
     {
-        $estados = EstadoOrden::orderBy('id_estado', 'asc')->get();
+        $ordenDeseado = ['PENDIENTE', 'EN PROCESO', 'FINALIZADO'];
+
+        $estados = EstadoOrden::query()
+            ->whereIn('nombre', $ordenDeseado)
+            ->get()
+            ->sortBy(function ($estado) use ($ordenDeseado) {
+                return array_search($estado->nombre, $ordenDeseado, true);
+            })
+            ->values();
 
         return response()->json([
             'message' => 'Lista de estados de orden',

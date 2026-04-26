@@ -15,6 +15,7 @@ class Cliente extends Model
         'nombres',
         'apellidos',
         'carnet_identidad',
+        'telefono',
         'fecha_registro',
         'ultima_modificacion',
         'estado'

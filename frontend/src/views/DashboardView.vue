@@ -1,33 +1,8 @@
 <template>
   <div class="dashboard-shell">
     <div class="dashboard-frame">
-      <header class="topbar">
-        <div class="menu-toggle" aria-hidden="true">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-        
-        <div class="brand">
-          <img :src="logo" alt="Hydrotrack" class="brand-logo" />
-          <span class="brand-name">HYDROTRACK</span>
-        </div>
-
-        <nav class="top-links">
-          <router-link to="/dashboard">DASHBOARD</router-link>
-          <a href="#">CLIENTES</a>
-          <router-link to="/inventario">INVENTARIO</router-link>
-          <a href="#">ORDENES</a>
-          <a href="#">PAGOS</a>
-          <router-link to="/usuarios">USUARIOS</router-link>
-          <a href="#">REPORTES</a>
-        </nav>
-
-        <div class="top-icons">
-          <span>o</span>
-          <span>{{ initials }}</span>
-        </div>
-      </header>
+      <NavbarAdmin />
+      <div class="navbar-spacer"></div>
 
       <main class="dashboard-content">
         <section class="hero">
@@ -49,7 +24,12 @@
 
         <section class="panel-grid">
           <article class="panel orders-panel">
-            <h2>ORDENES RECIENTES</h2>
+            <div class="panel-head">
+              <h2>ORDENES RECIENTES</h2>
+              <button type="button" class="panel-link-btn" @click="goToDashboardOrdenes">
+                Ver lista completa
+              </button>
+            </div>
             <div class="order-list">
               <div class="order-item" v-for="order in orders" :key="order.id">
                 <div class="status-pill" :class="order.statusClass">{{ order.status }}</div>
@@ -139,18 +119,13 @@ import { useRouter } from 'vue-router'
 import heroImage from '../assets/hero.png'
 import logo from '../assets/logo.png'
 import api from '../services/api'
+import NavbarAdmin from '../components/NavbarAdmin.vue'
 
 const router = useRouter()
 
 const currentUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || '{}')
 const nombre = currentUser.nombre || 'Administrador'
 const usuario = currentUser.usuario || 'admin'
-const initials = (nombre || 'A')
-  .split(' ')
-  .filter(Boolean)
-  .slice(0, 2)
-  .map((word) => word[0].toUpperCase())
-  .join('')
 
 const stats = ref([
   { label: 'Clientes Registrados', value: '...' },
@@ -198,6 +173,7 @@ const alerts = ref([
     detail: 'Bs 140 por servicio pendiente',
     tone: 'success'
   }
+])
 
 onMounted(async () => {
   try {
@@ -233,6 +209,10 @@ const goToAlert = (alert) => {
   }
 }
 
+const goToDashboardOrdenes = () => {
+  router.push('/dashboard/ordenes')
+}
+
 const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct']
 </script>
 
@@ -260,6 +240,10 @@ const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', '
   background: var(--card);
   border: 1px solid #9ba5b5;
   box-shadow: 0 20px 60px rgba(8, 15, 32, 0.22);
+}
+
+.navbar-spacer {
+  height: 70px;
 }
 
 .topbar {
@@ -443,6 +427,28 @@ const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', '
   letter-spacing: 0.03em;
   font-size: 30px;
   font-weight: 500;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.panel-head h2 {
+  margin: 0;
+}
+
+.panel-link-btn {
+  border: 1px solid #c6d4ef;
+  border-radius: 12px;
+  background: #eff4ff;
+  color: #1b3978;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .orders-panel,

@@ -1,9 +1,7 @@
 <template>
   <div class="gestion-shell">
-    <header class="topbar">
-
-      <Navbar />
-    </header>
+    <NavbarAdmin />
+    <div class="navbar-spacer"></div>
 
     <main class="panel">
       <div class="panel-head">
@@ -49,7 +47,7 @@
         </table>
       </div>
 
-      <div class="table-wrap" v-else>
+      <div class="table-wrap" v-else-if="activeTab === 'clientes'">
         <table>
           <thead>
             <tr>
@@ -57,6 +55,7 @@
               <th>Nombres</th>
               <th>Apellidos</th>
               <th>Carnet de Identidad</th>
+              <th>Telefono</th>
               <th>Fecha Registro</th>
               <th>Ultima Modificacion</th>
               <th>Estado</th>
@@ -69,6 +68,7 @@
               <td>{{ item.nombres }}</td>
               <td>{{ item.apellidos }}</td>
               <td>{{ item.carnet_identidad }}</td>
+              <td>{{ item.telefono || '-' }}</td>
               <td>{{ formatDate(item.fecha_registro) }}</td>
               <td>{{ formatDate(item.ultima_modificacion) }}</td>
               <td>{{ item.estado ? 'Activo' : 'Inactivo' }}</td>
@@ -79,7 +79,7 @@
               </td>
             </tr>
             <tr v-if="!clientes.length">
-              <td colspan="8" class="empty">No hay clientes registrados</td>
+              <td colspan="9" class="empty">No hay clientes registrados</td>
             </tr>
           </tbody>
         </table>
@@ -146,7 +146,7 @@
           </div>
         </form>
 
-        <form v-else @submit.prevent="handleClienteSubmit" :class="{ 'is-view': modalMode === 'view' }">
+        <form v-else-if="activeTab === 'clientes'" @submit.prevent="handleClienteSubmit" :class="{ 'is-view': modalMode === 'view' }">
           <label>Nombres</label>
           <input v-model="clienteForm.nombres" :disabled="modalMode === 'view'" required maxlength="100" />
 
@@ -155,6 +155,9 @@
 
           <label>Carnet de Identidad</label>
           <input v-model="clienteForm.carnet_identidad" :disabled="modalMode === 'view'" required maxlength="30" />
+
+          <label>Telefono</label>
+          <input v-model="clienteForm.telefono" :disabled="modalMode === 'view'" required maxlength="20" />
 
           <label class="inline-check">
             <input type="checkbox" v-model="clienteForm.estado" :disabled="modalMode === 'view'" />
@@ -168,6 +171,7 @@
             <button v-if="modalMode !== 'view'" type="submit" :disabled="loading">{{ loading ? 'Guardando...' : 'Guardar' }}</button>
           </div>
         </form>
+
       </div>
     </div>
 
@@ -196,7 +200,8 @@
 </template>
 
 <script setup>
-import Navbar from '../components/NavbarAdmin.vue'
+import { onMounted } from 'vue'
+import NavbarAdmin from '../components/NavbarAdmin.vue'
 
 import '../assets/gestion.css'
 import logo from '../assets/logo.png'
@@ -229,6 +234,17 @@ import {
   deleteUsuario,
   viewCliente,
   editCliente,
-  deleteCliente
+  deleteCliente,
+  initGestionData
 } from '../services/gestionService'
+
+onMounted(() => {
+  initGestionData()
+})
 </script>
+
+<style scoped>
+.navbar-spacer {
+  height: 70px;
+}
+</style>
