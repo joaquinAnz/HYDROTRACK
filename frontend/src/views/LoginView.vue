@@ -51,6 +51,24 @@ const mantenerSesion = ref(false)
 const cargando = ref(false)
 const error = ref('')
 
+const normalizeRoleName = (value) =>
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+
+const resolveHomeByRole = (user) => {
+  const roleName = normalizeRoleName(user?.rol_nombre || user?.rol || user?.role || user?.tipo)
+  const roleId = String(user?.id_rol || user?.rol_id || '')
+
+  if (roleName.includes('tecnico') || roleName.includes('venta') || roleId === '2' || roleId === '3') {
+    return '/dashboard/ordenes'
+  }
+
+  return '/dashboard'
+}
+
 const iniciarSesion = async () => {
   error.value = ''
 
@@ -75,7 +93,7 @@ const iniciarSesion = async () => {
       sessionStorage.setItem('user', JSON.stringify(user))
     }
 
-    router.push('/dashboard')
+    router.push(resolveHomeByRole(user))
 
   } catch (err) {
     error.value = err.response?.data?.message || 'Error al iniciar sesión'

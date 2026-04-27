@@ -115,7 +115,7 @@
 
           <template v-if="modalMode === 'create'">
             <label>Contrasena</label>
-            <input v-model="usuarioForm.password" :required="modalMode === 'create'" type="password" minlength="6" maxlength="100" placeholder="Dejar en blanco para mantener la actual" />
+            <input v-model="usuarioForm.password" :required="modalMode === 'create'" type="password" minlength="6" maxlength="100" placeholder="Ingrese una contrasena" />
           </template>
 
           <label>Rol</label>
@@ -197,11 +197,13 @@
       </div>
     </div>
   </div>
+  <Footer :logo="logo" />
 </template>
 
 <script setup>
 import { onMounted } from 'vue'
 import NavbarAdmin from '../components/NavbarAdmin.vue'
+import Footer from '../components/Footer.vue'
 
 import '../assets/gestion.css'
 import logo from '../assets/logo.png'

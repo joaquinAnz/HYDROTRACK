@@ -57,15 +57,13 @@ class OrdenTrabajoController extends Controller
         $data['codigo_seguimiento'] = $this->generarCodigoSeguimiento();
         $data['fecha_ingreso'] = now();
         $data['costo_mano_obra'] = $data['costo_mano_obra'] ?? 0;
-        $data['total_orden'] = $data['costo_mano_obra'];
+        $data['total_orden'] = $data['total_orden'] ?? $data['costo_mano_obra'];
 
         $orden = OrdenTrabajo::create($data);
 
         $vehiculo = Vehiculo::find($data['id_vehiculo'] ?? null);
-        if (!$esSoloVenta && $vehiculo && $vehiculo->estado !== 'eliminado') {
-            $vehiculo->update([
-                'estado' => 'en_taller',
-            ]);
+        if (!$esSoloVenta && $vehiculo && $vehiculo->estado === 1) {
+            // El vehículo permanece activo en la tabla de vehículos.
         }
 
         $orden->load([
@@ -177,7 +175,7 @@ class OrdenTrabajoController extends Controller
             [
                 'id_cliente' => $idCliente,
                 'descripcion' => 'Vehiculo virtual para ventas en mostrador',
-                'estado' => 'activo',
+                'estado' => 1,
                 'marca' => 'N/A',
                 'modelo' => 'N/A',
                 'anio' => null,
