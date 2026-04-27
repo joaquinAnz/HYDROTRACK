@@ -449,6 +449,11 @@ export function useOrdenTrabajo() {
       return
     }
 
+    if (!esSoloVenta.value && !form.value.id_estado) {
+      error.value = 'En servicio tecnico debes seleccionar un estado de orden'
+      return
+    }
+
     try {
       const payload = esSoloVenta.value
         ? {
@@ -456,7 +461,8 @@ export function useOrdenTrabajo() {
             id_cliente: form.value.id_cliente || null,
             id_tipo_servicio: form.value.id_tipo_servicio,
             id_usuario_registro: 1,
-            observaciones: form.value.observaciones
+            observaciones: form.value.observaciones,
+            total_orden: Number(totalEstimado.value.toFixed(2))
           }
         : {
             modo_atencion: 'servicio_tecnico',
@@ -469,7 +475,8 @@ export function useOrdenTrabajo() {
             diagnostico: form.value.diagnostico,
             observaciones: form.value.observaciones,
             costo_mano_obra: 0,
-            id_estado: form.value.id_estado
+            id_estado: Number(form.value.id_estado),
+            total_orden: Number(totalEstimado.value.toFixed(2))
           }
 
       const response = await axios.post(`${API_BASE}/ordenes-trabajo`, payload)

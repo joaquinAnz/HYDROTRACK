@@ -10,14 +10,16 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('servicios_adicionales', function (Blueprint $table) {
-        $table->id('id_servicio');
-        $table->string('nombre');
-        $table->decimal('precio', 10, 2);
-        $table->boolean('estado')->default(1);
-    });
-}
+    {
+        Schema::create('servicios_adicionales', function (Blueprint $table) {
+            $table->integer('id_servicio')->autoIncrement();
+
+            $table->string('nombre', 100);
+            $table->decimal('precio', 10,2);
+
+            $table->boolean('estado')->default(1);
+        });
+    }
 
     /**
      * Reverse the migrations.

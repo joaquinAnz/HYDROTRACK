@@ -326,11 +326,13 @@
       </section>
     </main>
   </div>
+  <Footer :logo="logo" />
 </template>
 
 <script setup>
 import NavbarAdmin from '../components/NavbarAdmin.vue'
 import { useOrdenTrabajo } from '../composables/useOrdenTrabajo'
+import Footer from '../components/Footer.vue'
 import '../assets/ordenTrabajo.css'
 
 const {

@@ -22,6 +22,7 @@ class Vehiculo extends Model
 
     protected $casts = [
         'anio' => 'integer',
+        'estado' => 'boolean',
     ];
 
     public function cliente()

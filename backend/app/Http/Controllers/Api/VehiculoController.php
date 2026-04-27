@@ -18,7 +18,7 @@ class VehiculoController extends Controller
         ;
 
         if (!$incluirEliminados) {
-            $query->where('estado', '!=', 'eliminado');
+            $query->where('estado', 1);
         }
 
         $vehiculos = $query->get();
@@ -57,7 +57,7 @@ class VehiculoController extends Controller
             'id_cliente' => $validated['id_cliente'],
             'placa' => strtoupper(trim($validated['placa'])),
             'descripcion' => trim($validated['descripcion']),
-            'estado' => 'activo',
+            'estado' => 1,
             'marca' => '',
             'modelo' => '',
             'anio' => null,
@@ -115,7 +115,7 @@ class VehiculoController extends Controller
         }
 
         $vehiculo->update([
-            'estado' => 'eliminado',
+            'estado' => 0,
         ]);
 
         return response()->json([

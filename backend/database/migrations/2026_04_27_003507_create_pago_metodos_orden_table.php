@@ -6,21 +6,26 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::create('pago_metodos_orden', function (Blueprint $table) {
-            $table->id('id_pago_metodo');
-            $table->unsignedBigInteger('id_pago_orden');
-            $table->string('metodo', 20);
-            $table->decimal('monto', 10, 2);
+            $table->integer('id_pago_metodo')->autoIncrement();
 
-            $table->foreign('id_pago_orden')
-                ->references('id_pago_orden')
-                ->on('pagos_orden')
-                ->onDelete('cascade');
+            $table->integer('id_pago_orden');
+
+            $table->string('metodo', 50);
+            $table->decimal('monto', 10,2);
+
+            $table->foreign('id_pago_orden')->references('id_pago_orden')->on('pagos_orden');
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('pago_metodos_orden');

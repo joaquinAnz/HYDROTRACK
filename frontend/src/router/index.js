@@ -83,6 +83,27 @@ const router = createRouter({
   routes
 })
 
+const normalizeRoleName = (value) =>
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+
+const resolveRoleKey = (user) => {
+  const roleName = normalizeRoleName(user?.rol_nombre || user?.rol || user?.role || user?.tipo)
+  if (roleName.includes('admin')) return 'admin'
+  if (roleName.includes('tecnico')) return 'tecnico'
+  if (roleName.includes('venta')) return 'ventas'
+
+  const roleId = String(user?.id_rol || user?.rol_id || '')
+  if (roleId === '1') return 'admin'
+  if (roleId === '2') return 'tecnico'
+  if (roleId === '3') return 'ventas'
+
+  return 'admin'
+}
+
 router.beforeEach((to, _from) => {
   if (!to.meta.requiresAuth) {
     return true
@@ -94,10 +115,16 @@ router.beforeEach((to, _from) => {
     return '/'
   }
 
+  let user
   try {
-    JSON.parse(storedUser)
+    user = JSON.parse(storedUser)
   } catch {
     return '/'
+  }
+
+  const roleKey = resolveRoleKey(user)
+  if (to.path === '/dashboard' && roleKey !== 'admin') {
+    return '/dashboard/ordenes'
   }
 
   return true

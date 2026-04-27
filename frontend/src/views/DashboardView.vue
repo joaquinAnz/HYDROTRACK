@@ -1,20 +1,17 @@
 <template>
   <div class="dashboard-shell">
-    <div class="dashboard-frame">
-      <NavbarAdmin />
-      <div class="navbar-spacer"></div>
-
-      <main class="dashboard-content">
+    <NavbarAdmin />
         <section class="hero">
-          <img :src="heroImage" alt="Panel Hydrotrack" class="hero-image" />
-          <div class="hero-overlay"></div>
-          <div class="hero-copy">
-            <p class="hero-subtitle">Taller sistemas de informacion</p>
-            <h1>PANEL DE ADMINISTRACION<br />HYDROTRACK</h1>
-            <p class="welcome">Bienvenido, {{ nombre }} ({{ usuario }})</p>
-          </div>
+            <img :src="heroImage" alt="Panel Hydrotrack" class="hero-image" />
+            <div class="hero-copy">
+              <p class="hero-subtitle">Taller sistemas de informacion</p>
+              <h1>PANEL DE ADMINISTRACION<br />HYDROTRACK</h1>
+              <p class="welcome">Bienvenido, {{ nombre }} ({{ usuario }})</p>
+            </div>
         </section>
-
+    <div class="dashboard-frame">
+      <main class="dashboard-content">
+    
         <section class="stats-grid">
           <article v-for="stat in stats" :key="stat.label" class="stat-card">
             <p class="label">{{ stat.label }}</p>
@@ -86,40 +83,20 @@
           </div>
         </section>
       </main>
-
-      <footer class="footer">
-        <div class="footer-brand">
-          <img :src="logo" alt="Hydrotrack" />
-          <h3>HYDROTRACK</h3>
-          <p>La plataforma para gestionar tu taller automotriz de forma clara y eficiente.</p>
-        </div>
-
-        <div>
-          <h4>Nuestra Compania</h4>
-          <a href="#">Nosotros</a>
-          <a href="#">Blog</a>
-          <a href="#">Nuestros Clientes</a>
-        </div>
-
-        <div>
-          <h4>Ayuda</h4>
-          <a href="#">Preguntas Frecuentes</a>
-          <a href="#">Apoyo</a>
-          <a href="#">Contactanos</a>
-        </div>
-      </footer>
     </div>
   </div>
+  <Footer :logo="logo" />
 </template>
 
 <script setup>
 
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import heroImage from '../assets/hero.png'
+import heroImage from '../assets/Header_Dash.png'
 import logo from '../assets/logo.png'
 import api from '../services/api'
 import NavbarAdmin from '../components/NavbarAdmin.vue'
+import Footer from '../components/Footer.vue'
 
 const router = useRouter()
 
@@ -225,12 +202,13 @@ const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', '
   --ink-900: #23252f;
   --ink-700: #545a68;
   --line: #d7dbe3;
-  --page: #f2f4f8;
+  --page:  #FFFFFF;;
   --card: #ffffff;
   --accent-red: #de6f68;
   min-height: 100vh;
   background: radial-gradient(circle at top, #d9dde5, #bcc2cb);
   padding: 18px;
+  background: #FFFFFF;
   font-family: 'Manrope', sans-serif;
 }
 
@@ -238,8 +216,9 @@ const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', '
   max-width: 1220px;
   margin: 0 auto;
   background: var(--card);
-  border: 1px solid #9ba5b5;
+  border: none;
   box-shadow: 0 20px 60px rgba(8, 15, 32, 0.22);
+  overflow-x: hidden;
 }
 
 .navbar-spacer {
@@ -325,7 +304,13 @@ const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', '
 
 .hero {
   position: relative;
-  height: 340px;
+  width: 100vw;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  min-height: calc(100vh - 70px);
+  height: calc(100vh - 70px);
   overflow: hidden;
 }
 

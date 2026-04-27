@@ -32,6 +32,7 @@ class StoreOrdenTrabajoRequest extends FormRequest
             'diagnostico' => 'nullable|string|max:2000',
             'observaciones' => 'nullable|string|max:2000',
             'costo_mano_obra' => 'nullable|numeric|min:0',
+            'total_orden' => 'nullable|numeric|min:0',
             'id_estado' => $esSoloVenta
                 ? 'nullable|integer|exists:estados_orden,id_estado'
                 : 'required|integer|exists:estados_orden,id_estado',

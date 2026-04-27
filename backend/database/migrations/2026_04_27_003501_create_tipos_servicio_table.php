@@ -9,15 +9,15 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up(): void
-{
-    Schema::create('tipos_servicio', function (Blueprint $table) {
-        $table->id('id_tipo_servicio');
-        $table->string('nombre', 100);
-        $table->text('descripcion')->nullable();
-        $table->boolean('estado')->default(1);
-    });
-}
+    public function up(): void
+    {
+        Schema::create('tipos_servicio', function (Blueprint $table) {
+            $table->integer('id_tipo_servicio')->autoIncrement();
+            $table->string('nombre', 50);
+            $table->text('descripcion')->nullable();
+            $table->boolean('estado')->default(1);
+        });
+    }
 
     /**
      * Reverse the migrations.

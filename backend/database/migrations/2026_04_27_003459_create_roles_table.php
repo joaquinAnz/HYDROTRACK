@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('estados_orden', function (Blueprint $table) {
-            $table->id('id_estado');
-            $table->string('nombre')->unique();
+        Schema::create('roles', function (Blueprint $table) {
+            $table->integer('id_rol')->autoIncrement();
+            $table->string('nombre', 50)->unique();
         });
     }
 
@@ -22,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('estados_orden');
+        Schema::dropIfExists('roles');
     }
 };

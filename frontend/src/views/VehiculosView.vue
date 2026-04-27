@@ -74,11 +74,13 @@
       </div>
     </div>
   </div>
+  <Footer :logo="logo" />
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
 import NavbarAdmin from '../components/NavbarAdmin.vue'
+import Footer from '../components/Footer.vue'
 import api from '../services/api'
 import '../assets/gestion.css'
 

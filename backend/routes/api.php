@@ -14,7 +14,7 @@ use App\Http\Controllers\Api\DetalleServicioOrdenController;
 use App\Http\Controllers\Api\DetalleRepuestoOrdenController;
 use App\Http\Controllers\Api\OrdenActualizacionController;
 use App\Http\Controllers\Api\PagoOrdenController;
-use App\Http\Controllers\RepuestoController;
+use App\Http\Controllers\Api\RepuestoController;
 
 
 // AUTENTICACIÓN
@@ -97,6 +97,7 @@ Route::prefix('detalle-servicio-orden')->group(function () {
     Route::delete('/{id}', [DetalleServicioOrdenController::class, 'destroy']);
 });
 
+//detalles de repuesto por orden
 Route::prefix('detalle-repuesto-orden')->group(function () {
     Route::get('/', [DetalleRepuestoOrdenController::class, 'index']);
     Route::post('/', [DetalleRepuestoOrdenController::class, 'store']);
@@ -104,6 +105,7 @@ Route::prefix('detalle-repuesto-orden')->group(function () {
     Route::delete('/{id}', [DetalleRepuestoOrdenController::class, 'destroy']);
 });
 
+//pagos por orden
 Route::prefix('pagos-orden')->group(function () {
     Route::post('/', [PagoOrdenController::class, 'store']);
     Route::put('/{idPago}', [PagoOrdenController::class, 'update']);
@@ -112,8 +114,11 @@ Route::prefix('pagos-orden')->group(function () {
 
 
 
-Route::get('/repuestos', [RepuestoController::class, 'index']);
-Route::post('/repuestos', [RepuestoController::class, 'store']);
-Route::put('/repuestos/{id}', [RepuestoController::class, 'update']);
-Route::delete('/repuestos/{id}', [RepuestoController::class, 'destroy']);
+Route::prefix('repuestos')->group(function () {
+    Route::get('/', [RepuestoController::class, 'index']);
+    Route::post('/', [RepuestoController::class, 'store']);
+    Route::put('/{id}', [RepuestoController::class, 'update']);
+    Route::delete('/{id}', [RepuestoController::class, 'destroy']);
+});
+
 
